@@ -1,4 +1,4 @@
-module github.com/covalenthq/lumberjack/v2
+module github.com/covalenthq/lumberjack/v3
 
 require (
 	github.com/BurntSushi/toml v0.3.1
