@@ -3,10 +3,10 @@
 // Note that this is v2.0 of lumberjack, and should be imported using gopkg.in
 // thusly:
 //
-//   import "gopkg.in/natefinch/lumberjack.v2"
+//   import "gopkg.in/covalenthq/lumberjack.v2"
 //
 // The package name remains simply lumberjack, and the code resides at
-// https://github.com/natefinch/lumberjack under the v2.0 branch.
+// https://github.com/covalenthq/lumberjack under the v2.0 branch.
 //
 // Lumberjack is intended to be one part of a logging infrastructure.
 // It is not an all-in-one solution, but instead is a pluggable
