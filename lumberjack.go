@@ -32,6 +32,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
@@ -93,6 +94,11 @@ type Logger struct {
 	// based on age.
 	MaxAge int `json:"maxage" yaml:"maxage"`
 
+	// RollingInterval is the number of seconds before rotating to a new log file.
+	// the old log files will be deleted by the MaxAge & MaxBackups properties as usual.
+	// if the rolling interval is 0 the feature is off, default is 0.
+	RollingInterval int64 `json:"rollinginterval" yaml:"rollinginterval"`
+
 	// MaxBackups is the maximum number of old log files to retain.  The default
 	// is to retain all old log files (though MaxAge may still cause them to get
 	// deleted.)
@@ -105,11 +111,11 @@ type Logger struct {
 
 	// Compress determines if the rotated log files should be compressed
 	// using gzip. The default is not to perform compression.
-	Compress bool `json:"compress" yaml:"compress"`
-
-	size int64
-	file *os.File
-	mu   sync.Mutex
+	Compress  bool `json:"compress" yaml:"compress"`
+	createdAt int64
+	size      int64
+	file      *os.File
+	mu        sync.Mutex
 
 	millCh    chan bool
 	startMill sync.Once
@@ -147,18 +153,32 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 		if err = l.openExistingOrNew(len(p)); err != nil {
 			return 0, err
 		}
-	}
-
-	if l.size+writeLen > l.max() {
-		if err := l.rotate(); err != nil {
-			return 0, err
-		}
+	} else if _, err = l.rotateIfRequired(l.size + writeLen); err != nil {
+		return 0, err
 	}
 
 	n, err = l.file.Write(p)
 	l.size += int64(n)
 
 	return n, err
+}
+
+func (l *Logger) rotateIfRequired(contentSize int64) (bool, error) {
+	if contentSize > l.max() {
+		if err := l.rotate(); err != nil {
+			return false, err
+		} else {
+			return true, nil
+		}
+	} else if l.exceedsRollingInterval() {
+		if err := l.rotate(); err != nil {
+			return false, err
+		} else {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 // Close implements io.Closer, and closes the current logfile.
@@ -238,6 +258,7 @@ func (l *Logger) openNew() error {
 	}
 	l.file = f
 	l.size = 0
+	l.createdAt = time.Now().Unix()
 	return nil
 }
 
@@ -273,8 +294,11 @@ func (l *Logger) openExistingOrNew(writeLen int) error {
 		return fmt.Errorf("error getting log file info: %s", err)
 	}
 
-	if info.Size()+int64(writeLen) >= l.max() {
-		return l.rotate()
+	stat_t := info.Sys().(*syscall.Stat_t)
+	l.createdAt = stat_t.Ctimespec.Sec
+	rotated, err := l.rotateIfRequired(info.Size() + int64(writeLen))
+	if rotated {
+		return err
 	}
 
 	file, err := os.OpenFile(filename, os.O_APPEND|os.O_WRONLY, 0644)
@@ -447,6 +471,11 @@ func (l *Logger) max() int64 {
 		return int64(defaultMaxSize * megabyte)
 	}
 	return int64(l.MaxSize) * int64(megabyte)
+}
+
+// exceedsRollingInterval checks if the log file age exceeds the rolling interval
+func (l *Logger) exceedsRollingInterval() bool {
+	return l.RollingInterval > 0 && time.Now().Unix()-l.createdAt >= l.RollingInterval
 }
 
 // dir returns the directory for the current filename.
