@@ -1,7 +1,7 @@
 # lumberjack
 ### Lumberjack is a Go package for writing logs to rolling files.
 
-Package lumberjack provides a rolling logger. It's a fork of [lumberjack by natefunc](https://github.com/natefinch/lumberjack) with added support for file rotation based on time elapsed since current logfile created.
+Package lumberjack provides a rolling logger. It's a fork of [natefinch/lumberjack](https://github.com/natefinch/lumberjack) with added support for file rotation based on time elapsed since current logfile created.
 
 Note that this is v2.0 of lumberjack, and should be imported using gopkg.in
 thusly:
