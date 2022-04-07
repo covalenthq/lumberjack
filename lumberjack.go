@@ -32,8 +32,9 @@ import (
 	"sort"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
+
+	patimes "github.com/djherbis/times"
 )
 
 const (
@@ -294,8 +295,10 @@ func (l *Logger) openExistingOrNew(writeLen int) error {
 		return fmt.Errorf("error getting log file info: %s", err)
 	}
 
-	stat_t := info.Sys().(*syscall.Stat_t)
-	l.createdAt = stat_t.Ctimespec.Sec
+	pat, err := patimes.Stat(filename)
+	if err == nil && pat.HasBirthTime() {
+		l.createdAt = pat.BirthTime().Unix()
+	}
 	rotated, err := l.rotateIfRequired(info.Size() + int64(writeLen))
 	if rotated {
 		return err
