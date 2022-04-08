@@ -3,13 +3,15 @@
 
 Package lumberjack provides a rolling logger. It's a fork of [natefinch/lumberjack](https://github.com/natefinch/lumberjack) with added support for file rotation based on time elapsed since current logfile created.
 
-Note that this is v2.0 of lumberjack, and should be imported using gopkg.in
+Note that this is v3.0.1 of lumberjack, and should be imported using gopkg.in
 thusly:
 
-    import "gopkg.in/covalenthq/lumberjack.v2"
+    import "gopkg.in/covalenthq/lumberjack/v3"
 
-The package name remains simply lumberjack, and the code resides at
-https://github.com/covalenthq/lumberjack under the v2.0 branch.
+Note: REST OF THE DOCUMENTATION IS NOT UPDATED TO REFLECT THE NEW OPTIONS
+---
+
+
 
 Lumberjack is intended to be one part of a logging infrastructure.
 It is not an all-in-one solution, but instead is a pluggable
